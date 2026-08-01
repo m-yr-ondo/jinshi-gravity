@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jinshi Gravity</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <h1 class="brand">Jinshi <span class="brand-accent">Gravity</span></h1>
+        <div class="header-controls">
+          <span id="network-indicator" class="net-indicator disconnected" title="Network status">
+            <span class="net-dot"></span>
+            <span class="net-label">Disconnected</span>
+          </span>
+          <button id="mute-toggle" type="button" aria-pressed="false" title="Toggle sound">
+            <span id="mute-icon">🔊</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Lobby -->
+      <section id="lobby" class="panel lobby" aria-label="Local lobby">
+        <div class="lobby-grid">
+          <div class="lobby-card identity">
+            <h2>Your identity</h2>
+            <label for="display-name">Display name</label>
+            <input id="display-name" type="text" maxlength="18" placeholder="Your name" />
+            <p class="hint">Local player ID: <code id="player-id-display">--</code></p>
+            <p class="hint warn">Local IDs are not Discord identities.</p>
+          </div>
+
+          <div class="lobby-card create">
+            <h2>Create room</h2>
+            <label for="create-mode">Mode</label>
+            <select id="create-mode">
+              <option value="multiplayer" selected>Multiplayer</option>
+              <option value="practice">Solo practice</option>
+            </select>
+            <label for="create-map">Starting level</label>
+            <select id="create-map"></select>
+            <button id="create-button" type="button">Create room</button>
+            <p id="create-error" class="error" hidden></p>
+          </div>
+
+          <div class="lobby-card join">
+            <h2>Join room</h2>
+            <label for="room-code">Room code</label>
+            <input id="room-code" type="text" maxlength="8" placeholder="ABCD" />
+            <button id="join-button" type="button">Join</button>
+            <p id="join-error" class="error" hidden></p>
+          </div>
+
+          <div class="lobby-card room" hidden id="room-card">
+            <h2>Room <span id="room-code-display" class="code"></span>
+              <button id="copy-code" type="button" title="Copy room code">Copy</button>
+            </h2>
+            <div class="room-meta">
+              <span id="room-mode-badge" class="badge">multiplayer</span>
+              <span id="room-host-badge" class="badge">host</span>
+              <label for="map-select" id="map-select-label">Level</label>
+              <select id="map-select" disabled></select>
+            </div>
+            <ul id="player-list" class="player-list"></ul>
+            <div class="room-actions">
+              <button id="ready-button" type="button" disabled>Mark ready</button>
+              <button id="start-button" type="button" disabled>Start round</button>
+              <button id="leave-button" type="button">Leave</button>
+            </div>
+            <p id="room-error" class="error" hidden></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Countdown overlay (HTML; mirrored from server broadcasts) -->
+      <div id="countdown-overlay" class="countdown-overlay" hidden>
+        <span id="countdown-text">3</span>
+      </div>
+
+      <!-- Phaser canvas mounts here during RUNNING / FINISHED -->
+      <div id="game-mount" hidden></div>
+
+      <!-- Spectator banner -->
+      <div id="spectator-banner" class="spectator-banner" hidden>
+        <span>You joined mid-race — spectating until the next round.</span>
+      </div>
+
+      <!-- Results overlay -->
+      <section id="results" class="panel results" hidden aria-label="Results">
+        <h2>Results <small id="result-reason"></small></h2>
+        <ol id="results-list" class="results-list"></ol>
+        <div class="results-actions">
+          <button id="rematch-button" type="button">Vote rematch (<span id="rematch-votes">0</span>/<span id="rematch-required">0</span>)</button>
+          <button id="results-leave" type="button">Back to lobby</button>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <span>Jinshi Gravity · local-only build · <a href="../../docs/GAME_SPEC.md" target="_blank">Spec</a> · <a href="../../docs/FUTURE_INTEGRATION.md" target="_blank">Future integration</a></span>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
