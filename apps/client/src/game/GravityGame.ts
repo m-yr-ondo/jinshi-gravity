@@ -35,7 +35,8 @@ export function startGame(opts: StartGameOptions): Phaser.Game {
       target: 60,
     },
     render: {
-      antialias: true,
+      antialias: false,
+      pixelArt: true,
       powerPreference: "high-performance",
     },
     input: {
