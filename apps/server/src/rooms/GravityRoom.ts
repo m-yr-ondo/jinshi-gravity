@@ -101,6 +101,13 @@ export class GravityRoom extends Room<{ state: GravityRoomState }> {
     // Reconnection path: an existing seat is reserved for this playerId.
     const existing = this.state.players.get(playerId);
     if (existing) {
+      // Drop the stale session id mapping before installing the new one,
+      // so the old socket can no longer be resolved to this live seat via
+      // seatFor() (prevents two sockets from contending one seat).
+      const previousSessionId = this.sessionByPlayerId.get(playerId);
+      if (previousSessionId && previousSessionId !== client.sessionId) {
+        this.playerIdBySession.delete(previousSessionId);
+      }
       existing.connected = true;
       existing.sessionId = client.sessionId;
       this.sessionByPlayerId.set(playerId, client.sessionId);
@@ -512,7 +519,10 @@ export class GravityRoom extends Room<{ state: GravityRoomState }> {
     const g = this.grace.get(playerId);
     if (g?.timer) clearTimeout(g.timer);
     this.grace.delete(playerId);
-    // If the host left, promote the next seated player.
+    const sessionId = this.sessionByPlayerId.get(playerId);
+    if (sessionId) this.playerIdBySession.delete(sessionId);
+    this.sessionByPlayerId.delete(playerId);
+
     if (this.state.hostId === playerId) {
       const next = this.seatedPlayers()[0];
       if (next) {
@@ -566,6 +576,17 @@ export class GravityRoom extends Room<{ state: GravityRoomState }> {
     const s = new Set<number>();
     for (const p of this.state.players.values()) s.add(p.color);
     return s;
+  }
+
+  /** @internal Expose private session maps so tests can assert no stale entries. */
+  __testSessionMaps(): {
+    sessionByPlayerId: Map<string, string>;
+    playerIdBySession: Map<string, string>;
+  } {
+    return {
+      sessionByPlayerId: this.sessionByPlayerId,
+      playerIdBySession: this.playerIdBySession,
+    };
   }
 }
 

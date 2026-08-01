@@ -38,20 +38,17 @@ export function startGame(opts: StartGameOptions): Phaser.Game {
       antialias: true,
       powerPreference: "high-performance",
     },
-    scene: [GameScene, HudScene],
     input: {
       activePointers: 1,
     },
     callbacks: {
       postBoot(g) {
-        const scene = g.scene.getScene("GameScene") as GameScene;
-        scene.scene.start("GameScene", {
+        g.scene.add("GameScene", GameScene, true, {
           room: opts.room,
           map: opts.map,
           localPlayerId: opts.localPlayerId,
         });
-        const hud = g.scene.getScene("HudScene") as HudScene;
-        hud.scene.start("HudScene", {
+        g.scene.add("HudScene", HudScene, true, {
           room: opts.room,
           localPlayerId: opts.localPlayerId,
         });

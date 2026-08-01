@@ -24,17 +24,23 @@ function uuid(): string {
   );
 }
 
-/** Stable local player ID. Persisted in localStorage. NOT a Discord identity. */
+/**
+ * Stable per-tab player ID. Stored in sessionStorage so each browser tab gets
+ * its own identity (independent racers across tabs), while a single tab retains
+ * its identity across refreshes. NOT a Discord identity. Display name and mute
+ * preference (below) intentionally stay on localStorage because they are not
+ * identity and are fine to share across tabs.
+ */
 export function getLocalPlayerId(): string {
   try {
-    const existing = localStorage.getItem(PLAYER_ID_KEY);
+    const existing = sessionStorage.getItem(PLAYER_ID_KEY);
     if (existing && existing.length > 0) return existing;
   } catch {
     /* storage may be unavailable in some embedding contexts */
   }
   const id = uuid();
   try {
-    localStorage.setItem(PLAYER_ID_KEY, id);
+    sessionStorage.setItem(PLAYER_ID_KEY, id);
   } catch {
     /* ignore */
   }

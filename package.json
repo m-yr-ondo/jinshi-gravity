@@ -12,7 +12,7 @@
     "dev:server": "npm run dev -w @jinshi-gravity/server",
     "dev:client": "npm run dev -w @jinshi-gravity/client",
     "build": "npm run build -w @jinshi-gravity/shared && npm run build -w @jinshi-gravity/server && npm run build -w @jinshi-gravity/client",
-    "test": "npm run build -w @jinshi-gravity/shared && npm run test -w @jinshi-gravity/shared && npm run test -w @jinshi-gravity/server",
+    "test": "npm run build -w @jinshi-gravity/shared && npm run test -w @jinshi-gravity/shared && npm run test -w @jinshi-gravity/server && npm run test -w @jinshi-gravity/client",
     "typecheck": "npm run build -w @jinshi-gravity/shared && npm run typecheck -w @jinshi-gravity/server && npm run typecheck -w @jinshi-gravity/client",
     "clean": "node -e \"require('fs').rmSync('packages/shared/dist',{recursive:true,force:true});require('fs').rmSync('apps/server/dist',{recursive:true,force:true});require('fs').rmSync('apps/client/dist',{recursive:true,force:true})\""
   },

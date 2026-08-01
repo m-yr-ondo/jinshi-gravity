@@ -58,8 +58,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(BG_COLOR);
     this.cameras.main.setRoundPixels(true);
 
-    // World bounds follow the map.
-    this.physics.world.setBounds(0, 0, this.map.width, this.map.height);
+    // Camera bounds follow the map.
     this.cameras.main.setBounds(0, 0, this.map.width, this.map.height);
 
     this.drawMap();
@@ -73,8 +72,8 @@ export class GameScene extends Phaser.Scene {
     // Keyboard + mouse input.
     if (this.input.keyboard) {
       this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-      this.input.keyboard.on("keydown-SPACE", this.onSwitchInput, this);
-      this.input.keyboard.on("keydown-UP", this.onSwitchInput, this);
+      this.input.keyboard.on("keydown-SPACE", this.handleKeydown, this);
+      this.input.keyboard.on("keydown-UP", this.handleKeydown, this);
     }
     this.input.on("pointerdown", this.onSwitchInput, this);
 
@@ -99,8 +98,8 @@ export class GameScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.off("pointerdown", this.onSwitchInput, this);
       if (this.input.keyboard) {
-        this.input.keyboard.off("keydown-SPACE", this.onSwitchInput, this);
-        this.input.keyboard.off("keydown-UP", this.onSwitchInput, this);
+        this.input.keyboard.off("keydown-SPACE", this.handleKeydown, this);
+        this.input.keyboard.off("keydown-UP", this.handleKeydown, this);
       }
     });
   }
@@ -310,6 +309,11 @@ export class GameScene extends Phaser.Scene {
     // Display the new gravity direction immediately while we wait for confirmation.
     const flip = p.gravityDir < 0;
     r.arrow.setRotation(flip ? 0 : Math.PI);
+  }
+
+  private handleKeydown(event: KeyboardEvent): void {
+    if (event.repeat) return;
+    this.onSwitchInput();
   }
 
   private shortName(pid: string): string {

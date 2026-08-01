@@ -26,11 +26,8 @@ export function syncState(
     wire.connected = p.connected;
     if (!p.alive && !wire.eliminated) {
       wire.eliminated = true;
-      wire.placement = computeLivePlacement(sim, p.playerId);
     }
-    if (p.finished && wire.placement === 0) {
-      wire.placement = computeLivePlacement(sim, p.playerId);
-    }
+    wire.placement = computeLivePlacement(sim, p.playerId);
   }
 }
 

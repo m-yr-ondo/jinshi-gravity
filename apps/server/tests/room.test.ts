@@ -92,7 +92,10 @@ it("rejects attempts to start with too few ready players", async () => {
       [...roomState(room).players.values()].every((p: any) => p.ready),
     );
     c1.send("start-round", {});
-    await waitFor(() => roomState(room).phase === "RUNNING", 6000);
+    // The schema patch flips phase first; the broadcast message arrives
+    // immediately afterwards over a separate channel, so wait for it.
+    await waitFor(() => roundStarts.length > 0, 6000);
+    await waitFor(() => roomState(room).phase === "RUNNING", 1000);
     expect(roundStarts.length).toBeGreaterThan(0);
     await c1.leave();
     await c2.leave();
@@ -217,6 +220,97 @@ it("rejects attempts to start with too few ready players", async () => {
     await c1.leave();
     await c2.leave();
   }, 25000);
+
+  it("reconnection drops the stale session mapping so the old socket cannot drive the seat", async () => {
+    const room = await server.createRoom<GravityRoom>("gravity", { mode: "multiplayer" });
+    const c1 = await server.connectTo(room, { playerId: "rec-1", displayName: "Reconnect-A" });
+    const c2 = await server.connectTo(room, makeClientOptions(1));
+    c1.send("set-ready", { ready: true });
+    c2.send("set-ready", { ready: true });
+    await waitFor(() =>
+      [...roomState(room).players.values()].every((p: any) => p.ready),
+    );
+    c1.send("start-round", {});
+    await waitFor(() => roomState(room).phase === "RUNNING", 6000);
+
+    const sim = (room as unknown as { sim: import("@jinshi-gravity/shared").GravitySimulation | null }).sim!;
+    const seatPlayerId = "rec-1";
+
+    // First, the original session actually controls the seat.
+    c1.send("gravity-switch", { sequence: 1, clientTime: 1 });
+    await waitFor(
+      () => sim.getPlayer(seatPlayerId)?.inputSequence === 1,
+      4000,
+    );
+    expect(sim.getPlayer(seatPlayerId)?.inputSequence).toBe(1);
+
+    // Now a second client opens with the SAME playerId (simulating a tab
+    // refresh / reconnection). The room routes it through the reconnection
+    // branch which should evict c1's sessionId from the session maps.
+    const c1Reborn = await server.connectTo(room, { playerId: "rec-1", displayName: "Reconnect-A" });
+    await new Promise((r) => setTimeout(r, 200));
+
+    const maps = (room as unknown as {
+      __testSessionMaps: () => {
+        sessionByPlayerId: Map<string, string>;
+        playerIdBySession: Map<string, string>;
+      };
+    }).__testSessionMaps();
+    expect(maps.sessionByPlayerId.size).toBe(2);
+    expect(maps.playerIdBySession.size).toBe(2);
+    expect(maps.sessionByPlayerId.get(seatPlayerId)).toBe(c1Reborn.sessionId);
+
+    // The new (reborn) session can drive the seat.
+    c1Reborn.send("gravity-switch", { sequence: 2, clientTime: 2 });
+    await waitFor(
+      () => sim.getPlayer(seatPlayerId)?.inputSequence === 2,
+      4000,
+    );
+    expect(sim.getPlayer(seatPlayerId)?.inputSequence).toBe(2);
+
+    // The stale session (c1) must NOT be able to drive the seat anymore.
+    // Sending sequence=3 from c1 should leave the seat's inputSequence at 2.
+    c1.send("gravity-switch", { sequence: 3, clientTime: 3 });
+    await new Promise((r) => setTimeout(r, 350));
+    expect(sim.getPlayer(seatPlayerId)?.inputSequence).toBe(2);
+
+    await c1Reborn.leave();
+    await c2.leave();
+    // Old c1 is already invalidated; leave through cleanup.
+    try { await c1.leave(); } catch { /* alreadydisconnected */ }
+  }, 25000);
+
+  it("removePlayer cleans up both session maps for the seat", async () => {
+    const room = await server.createRoom<GravityRoom>("gravity", { mode: "multiplayer" });
+    const c1 = await server.connectTo(room, { playerId: "rm-1", displayName: "Remove-Me" });
+    await waitFor(() => roomState(room).players.size === 1);
+    expect(roomState(room).players.has("rm-1")).toBe(true);
+
+    const mapsBefore = (room as unknown as {
+      __testSessionMaps: () => {
+        sessionByPlayerId: Map<string, string>;
+        playerIdBySession: Map<string, string>;
+      };
+    }).__testSessionMaps();
+    expect(mapsBefore.sessionByPlayerId.has("rm-1")).toBe(true);
+    expect(mapsBefore.playerIdBySession.has(c1.sessionId)).toBe(true);
+
+    // Leaving during LOBBY triggers removePlayer via onLeave.
+    await c1.leave();
+    await waitFor(() => roomState(room).players.size === 0, 4000);
+
+    const mapsAfter = (room as unknown as {
+      __testSessionMaps: () => {
+        sessionByPlayerId: Map<string, string>;
+        playerIdBySession: Map<string, string>;
+      };
+    }).__testSessionMaps();
+    expect(mapsAfter.sessionByPlayerId.has("rm-1")).toBe(false);
+    // Stale sessionId entry must be gone too.
+    expect(mapsAfter.playerIdBySession.has(c1.sessionId)).toBe(false);
+    expect(mapsAfter.sessionByPlayerId.size).toBe(0);
+    expect(mapsAfter.playerIdBySession.size).toBe(0);
+  }, 15000);
 });
 
 // Silence unused import warnings while keeping the typing useful.

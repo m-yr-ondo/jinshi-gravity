@@ -122,11 +122,9 @@ elimination, duplicate-input rejection, and rematch flow back to LOBBY.
 5. Tab A's host clicks **Start round**. The 3-second countdown appears in
    both tabs; RUNNING begins. Use Space, ↑, or left-click to switch gravity.
 6. To scale up: open additional tabs and **Join** with the same code, up to 8
-   total players.
-
-Tip: To run two tabs as different local identities (different colored
-players), open one of them in a normal window and another in a private
-window so the stable local `playerId` is independent per profile.
+   total players. Each plain browser tab automatically gets its own independent
+   player identity (per-tab `sessionStorage`), so no incognito / private window
+   is needed.
 
 ## Controls
 

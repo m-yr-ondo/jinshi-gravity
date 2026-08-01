@@ -215,6 +215,7 @@ function attachToRoom(room: GravityRoomController): void {
 function refreshRoomUI(): void {
   if (!currentRoom) return;
   const state = currentRoom.state;
+  if (!state.players) return;
   $("room-code-display").textContent = state.code ?? "----";
   $<HTMLSpanElement>("room-mode-badge").textContent = state.mode;
   const mySeat = state.players.get(PLAYER_ID);
@@ -250,6 +251,7 @@ function refreshRoomUI(): void {
 
 function renderPlayerList(state: GravityRoomStateShape): void {
   const list = $<HTMLUListElement>("player-list");
+  if (!state.players) return;
   // Build/refresh the displayed list.
   const seen = new Set<string>();
   for (const seat of state.players.values()) {
@@ -423,7 +425,8 @@ function hideGame(): void {
 // ---------- Section visibility ----------
 function showSection(section: "lobby" | "game"): void {
   const showLobby = section === "lobby";
-  $<HTMLDivElement>("game-mount").hidden = !showLobby ? false : true;
+  $<HTMLDivElement>("lobby").hidden = !showLobby;
+  $<HTMLDivElement>("game-mount").hidden = showLobby;
   if (showLobby) hideGame();
   if (!showLobby) hideResults();
 }
