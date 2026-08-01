@@ -199,7 +199,8 @@ function attachToRoom(room: GravityRoomController): void {
   cleanupFns.push(
     room.onMessage("eliminated", (m: { playerId: string; cause: string }) => {
       if (m.playerId === PLAYER_ID) {
-        showSpectatorBanner(true);
+        showDeathOverlay(true);
+        showSpectatorBanner(false);
       }
     }),
   );
@@ -242,6 +243,7 @@ function refreshRoomUI(): void {
     hideCountdown();
     hideResults();
     hideGame();
+    showDeathOverlay(false);
     showSpectatorBanner(false);
   } else if (state.phase === "FINISHED") {
     hideCountdown();
@@ -311,6 +313,7 @@ function hideCountdown(): void {
 
 function onRoundStarted(mapId: string): void {
   hideCountdown();
+  showDeathOverlay(false);
   const map = ALL_MAPS.find((m) => m.id === mapId) ?? ALL_MAPS[0];
   if (!map) return;
   currentMap = map;
@@ -323,6 +326,7 @@ function onRoundStarted(mapId: string): void {
 
 function onRoundEnded(_result: unknown): void {
   hideCountdown();
+  showDeathOverlay(false);
   // Reveal results overlay.
   showResults();
 }
@@ -397,6 +401,10 @@ function showSpectatorBanner(show: boolean): void {
   $<HTMLDivElement>("spectator-banner").hidden = !show;
 }
 
+function showDeathOverlay(show: boolean): void {
+  $<HTMLDivElement>("death-overlay").hidden = !show;
+}
+
 // ---------- Game mount ----------
 function mountGame(map: GameMap): void {
   if (phaserGame) {
@@ -448,6 +456,7 @@ async function leaveRoom(): Promise<void> {
   hideGame();
   hideResults();
   hideCountdown();
+  showDeathOverlay(false);
   showSpectatorBanner(false);
   $("room-card").hidden = true;
   network.setStatus("disconnected");

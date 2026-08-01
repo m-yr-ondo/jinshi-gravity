@@ -179,6 +179,8 @@ generated**:
 - **Graphics**: solid filled rectangles / triangles / text rendered
   procedurally via Phaser primitives with the neon palette defined in
   `apps/client/src/styles.css`. No image files.
+- **Runner sprite** (`apps/client/public/sprites/runner/runner-sheet.png`):
+  Kenney's Pixel Platformer pack, CC0. Credit: Kenney (kenney.nl).
 - **Fonts**: system stack (`Segoe UI`, `system-ui`, `Trebuchet MS`).
 - **Code**: this repository's MIT license covers everything.
 

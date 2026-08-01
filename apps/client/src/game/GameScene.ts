@@ -11,7 +11,7 @@ const FINISH_COLOR = 0x00ffcc;
 
 interface PlayerRig {
   container: Phaser.GameObjects.Container;
-  body: Phaser.GameObjects.Rectangle;
+  body: Phaser.GameObjects.Sprite;
   eye: Phaser.GameObjects.Arc;
   arrow: Phaser.GameObjects.Triangle;
   label: Phaser.GameObjects.Text;
@@ -54,7 +54,23 @@ export class GameScene extends Phaser.Scene {
     this.localPlayerId = data.localPlayerId;
   }
 
+  preload(): void {
+    this.load.spritesheet("runner", "sprites/runner/runner-sheet.png", {
+      frameWidth: 24,
+      frameHeight: 24,
+    });
+  }
+
   create(): void {
+    if (!this.anims.exists("runner-walk")) {
+      this.anims.create({
+        key: "runner-walk",
+        frames: this.anims.generateFrameNumbers("runner", { start: 1, end: 2 }),
+        frameRate: 8,
+        repeat: -1,
+      });
+    }
+
     this.cameras.main.setBackgroundColor(BG_COLOR);
     this.cameras.main.setRoundPixels(true);
 
@@ -129,11 +145,29 @@ export class GameScene extends Phaser.Scene {
       r.container.setPosition(r.displayX, r.displayY);
       r.container.setVisible(p.spectator === false || this.spectatorsVisible === true ? true : !p.spectator);
       r.container.setAlpha(p.spectator ? 0.45 : 1);
-      r.body.setFillStyle(p.color, p.alive ? 1 : 0.4);
+      if (!p.alive) {
+        r.body.stop();
+        r.body.setFrame(4);
+        r.body.setAlpha(0.5);
+      } else {
+        r.body.setAlpha(1);
+        if (!p.grounded) {
+          r.body.stop();
+          r.body.setFrame(3);
+        } else if (Math.abs(p.vx) > 5) {
+          if (!r.body.anims.isPlaying || r.body.anims.currentAnim?.key !== "runner-walk") {
+            r.body.play("runner-walk");
+          }
+        } else {
+          r.body.stop();
+          r.body.setFrame(0);
+        }
+      }
       r.alive = p.alive;
       // Arrow rotation indicates gravity dir.
       const flip = p.gravityDir < 0;
       r.arrow.setRotation(flip ? Math.PI : 0);
+      r.body.setFlipY(flip);
       r.label.setText(`${p.displayName}${p.isHost ? " ★" : ""}`);
     }
 
@@ -229,7 +263,10 @@ export class GameScene extends Phaser.Scene {
     if (!state) return;
     for (const [pid, p] of state.players.entries()) {
       let r = this.rigs.get(pid);
-      if (!r) r = this.createRig(p);
+      if (!r) {
+        r = this.createRig(p);
+        this.rigs.set(pid, r);
+      }
       r.lastServerX = p.x;
       r.lastServerY = p.y;
       r.lastUpdateMs = this.time.now;
@@ -250,7 +287,9 @@ export class GameScene extends Phaser.Scene {
     const container = this.add.container(p.x, p.y).setDepth(4);
     const w = SIM_CONFIG.playerWidth;
     const h = SIM_CONFIG.playerHeight;
-    const body = this.add.rectangle(0, 0, w, h, p.color, 1).setOrigin(0.5, 0.5);
+    const body = this.add.sprite(0, 0, "runner", 0).setOrigin(0.5, 0.5);
+    body.setDisplaySize(w, h);
+    body.setTint(p.color);
     const eye = this.add.circle(w / 4, -h / 6, 3, 0xffffff, 0.95);
     const arrow = this.add.triangle(0, h / 2 + 6, -6, 6, 6, 6, 0, -6, p.color, 1);
     const label = this.add

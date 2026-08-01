@@ -294,6 +294,36 @@ input:focus, select:focus {
   font-weight: 800;
 }
 
+.death-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 55;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.58);
+}
+.death-card {
+  display: grid;
+  gap: 8px;
+  min-width: 280px;
+  padding: 28px 36px;
+  text-align: center;
+  background: rgba(20, 20, 42, 0.94);
+  border: 1px solid var(--danger);
+  border-radius: 14px;
+  box-shadow: 0 0 24px rgba(255, 85, 102, 0.25);
+}
+.death-card strong {
+  color: var(--danger);
+  font-size: 34px;
+}
+.death-card span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .spectator-banner {
   position: fixed;
   top: 72px;
